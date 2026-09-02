@@ -1,0 +1,2 @@
+-- BankingPJ initial database migration.
+-- Business tables will be added in subsequent migrations.
