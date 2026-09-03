@@ -39,6 +39,7 @@ class RepositoryIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    // 실제 Flyway 마이그레이션이 테스트 DB에 적용되는지 검증한다.
     @Test
     void appliesProductionFlywayMigrations() {
         List<String> appliedVersions = jdbcTemplate.queryForList(
@@ -49,6 +50,7 @@ class RepositoryIntegrationTest {
         assertThat(appliedVersions).contains("1", "2", "3");
     }
 
+    // 회원 저장 후 ID와 이메일로 같은 회원을 조회하는지 검증한다.
     @Test
     void savesUserAndFindsItByIdAndEmail() {
         User savedUser = userRepository.saveAndFlush(
@@ -65,6 +67,7 @@ class RepositoryIntegrationTest {
         assertThat(foundByEmail.getUserId()).isEqualTo(userId);
     }
 
+    // DB가 중복 이메일 저장을 거부하는지 검증한다.
     @Test
     void rejectsDuplicateUserEmail() {
         userRepository.saveAndFlush(
@@ -76,6 +79,7 @@ class RepositoryIntegrationTest {
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    // 소유자 연관 관계와 정밀한 잔액이 계좌 조회 후 유지되는지 검증한다.
     @Test
     void savesAccountWithUserAndFindsExactBalanceByAccountNumber() {
         User savedUser = userRepository.saveAndFlush(
@@ -97,6 +101,7 @@ class RepositoryIntegrationTest {
         assertThat(foundAccount.getBalance()).isEqualTo(balance);
     }
 
+    // DB가 중복 계좌번호 저장을 거부하는지 검증한다.
     @Test
     void rejectsDuplicateAccountNumber() {
         User savedUser = userRepository.saveAndFlush(

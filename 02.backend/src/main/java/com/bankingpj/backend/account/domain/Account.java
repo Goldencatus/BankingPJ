@@ -47,9 +47,11 @@ public class Account {
     @Column(name = "updated_at", nullable = false, columnDefinition = "DATETIME(6)")
     private LocalDateTime updatedAt;
 
+    // JPA가 저장된 계좌를 복원할 때 사용하는 생성자다.
     protected Account() {
     }
 
+    // 소유자와 계좌 개설 정보를 받아 계좌를 생성한다.
     public Account(User user, String accountNumber, BigDecimal balance, AccountStatus status) {
         this.user = Objects.requireNonNull(user);
         this.accountNumber = Objects.requireNonNull(accountNumber);
@@ -57,6 +59,7 @@ public class Account {
         this.status = Objects.requireNonNull(status);
     }
 
+    // 최초 저장 시 생성·수정 시각을 함께 설정한다.
     @PrePersist
     private void initializeTimestamps() {
         LocalDateTime now = LocalDateTime.now();
@@ -64,35 +67,43 @@ public class Account {
         updatedAt = now;
     }
 
+    // 계좌 변경 내용을 저장할 때 수정 시각을 갱신한다.
     @PreUpdate
     private void updateTimestamp() {
         updatedAt = LocalDateTime.now();
     }
 
+    // 계좌 식별자를 반환한다.
     public Long getAccountId() {
         return accountId;
     }
 
+    // 계좌 소유자 연관 객체를 반환한다.
     public User getUser() {
         return user;
     }
 
+    // 계좌번호를 반환한다.
     public String getAccountNumber() {
         return accountNumber;
     }
 
+    // 계좌 잔액을 반환한다.
     public BigDecimal getBalance() {
         return balance;
     }
 
+    // 계좌 상태를 반환한다.
     public AccountStatus getStatus() {
         return status;
     }
 
+    // 계좌 생성 시각을 반환한다.
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
+    // 계좌의 마지막 수정 시각을 반환한다.
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }

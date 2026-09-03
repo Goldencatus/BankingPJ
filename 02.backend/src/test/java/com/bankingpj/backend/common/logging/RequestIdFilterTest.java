@@ -17,12 +17,14 @@ class RequestIdFilterTest {
 
     private final RequestIdFilter filter = new RequestIdFilter();
 
+    // 테스트가 사용한 MDC 값을 제거해 다른 테스트와 격리한다.
     @AfterEach
     void cleanUpMdc() {
         MDC.remove("requestId");
         MDC.remove("otherContext");
     }
 
+    // 입력 요청 ID가 처리 중 MDC와 응답 헤더에 유지되는지 검증한다.
     @Test
     void echoesProvidedRequestIdAndExposesItInMdcDuringProcessing() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -42,6 +44,7 @@ class RequestIdFilterTest {
         assertThat(MDC.get("requestId")).isNull();
     }
 
+    // 헤더 없는 요청에 새 ID를 부여하고 종료 시 MDC를 정리하는지 검증한다.
     @Test
     void addsRequestIdToResponseWhenRequestHeaderIsMissing() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -60,6 +63,7 @@ class RequestIdFilterTest {
         assertThat(MDC.get("requestId")).isNull();
     }
 
+    // 자동 생성된 요청 ID가 UUID v4 형식인지 검증한다.
     @Test
     void generatedRequestIdIsCanonicalRandomUuid() throws Exception {
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -74,6 +78,7 @@ class RequestIdFilterTest {
         assertThat(MDC.get("requestId")).isNull();
     }
 
+    // 후속 필터에서 예외가 발생해도 MDC 요청 ID를 제거하는지 검증한다.
     @Test
     void removesRequestIdEvenWhenFilterChainThrows() {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -90,6 +95,7 @@ class RequestIdFilterTest {
         assertThat(MDC.get("requestId")).isNull();
     }
 
+    // 요청 ID 정리 시 다른 구성 요소의 MDC 값은 보존하는지 검증한다.
     @Test
     void preservesMdcEntriesOwnedByOtherComponents() throws Exception {
         MDC.put("otherContext", "existing-value");
@@ -102,6 +108,7 @@ class RequestIdFilterTest {
         assertThat(MDC.get("otherContext")).isEqualTo("existing-value");
     }
 
+    // 같은 스레드의 연속 요청에 서로 다른 ID를 부여하는지 검증한다.
     @Test
     void generatesDistinctIdsForSequentialRequestsOnSameThread() throws Exception {
         MockHttpServletResponse firstResponse = new MockHttpServletResponse();

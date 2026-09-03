@@ -20,6 +20,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
     public static final String REQUEST_ID_HEADER = "X-Request-ID";
     public static final String MDC_REQUEST_ID_KEY = "requestId";
 
+    // 요청 ID를 응답과 MDC에 연결하고 처리 종료 시 MDC에서 제거한다.
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

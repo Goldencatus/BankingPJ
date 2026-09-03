@@ -22,6 +22,7 @@ class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
+    // 업무 예외가 자신의 오류 코드에 따라 응답되는지 검증한다.
     @Test
     void handlesBusinessExceptionWithItsErrorCode() {
         ResponseEntity<ApiResponse<Void>> response = handler.handleBusinessException(
@@ -31,6 +32,7 @@ class GlobalExceptionHandlerTest {
         assertErrorResponse(response, ErrorCode.INVALID_INPUT_VALUE);
     }
 
+    // DTO 검증 오류 메시지에 필드 이름이 포함되는지 검증한다.
     @Test
     void includesFieldNameForRequestBodyValidationError() throws NoSuchMethodException {
         ValidationRequest target = new ValidationRequest("");
@@ -53,6 +55,7 @@ class GlobalExceptionHandlerTest {
         );
     }
 
+    // JSON 파싱 실패 응답이 파서 내부 정보를 숨기는지 검증한다.
     @Test
     void handlesUnreadableJsonWithoutExposingParserDetails() {
         HttpMessageNotReadableException exception = new HttpMessageNotReadableException(
@@ -65,6 +68,7 @@ class GlobalExceptionHandlerTest {
         assertErrorResponse(response, ErrorCode.INVALID_REQUEST_FORMAT);
     }
 
+    // 내부 예외 메시지가 공통 오류 응답에 노출되지 않는지 검증한다.
     @Test
     void handlesUnexpectedExceptionWithoutExposingInternalDetails() {
         ResponseEntity<ApiResponse<Void>> response = handler.handleUnexpectedException(
@@ -74,6 +78,7 @@ class GlobalExceptionHandlerTest {
         assertErrorResponse(response, ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
+    // 공통 실패 응답의 상태·데이터·오류 코드·메시지를 확인한다.
     private void assertErrorResponse(
             ResponseEntity<ApiResponse<Void>> response,
             ErrorCode expectedErrorCode
@@ -87,6 +92,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(expectedErrorCode.getMessage(), body.getError().message());
     }
 
+    // 검증할 HTTP 응답 본문이 존재하는지 확인하고 반환한다.
     private ApiResponse<Void> requireBody(ResponseEntity<ApiResponse<Void>> response) {
         ApiResponse<Void> body = response.getBody();
         assertNotNull(body);
@@ -98,6 +104,7 @@ class GlobalExceptionHandlerTest {
 
     private static class ValidationTarget {
 
+        // 요청 DTO 검증 예외를 구성할 리플렉션 대상 메서드를 제공한다.
         @SuppressWarnings("unused")
         void accept(ValidationRequest request) {
         }
