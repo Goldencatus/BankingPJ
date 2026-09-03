@@ -25,3 +25,8 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Gradle
+/.gradle-user-home/
+**/.gradle/
+**/build/
