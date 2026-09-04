@@ -1,5 +1,6 @@
 package com.bankingpj.backend.auth;
 
+import com.bankingpj.backend.account.repository.AccountRepository;
 import com.bankingpj.backend.auth.config.AuthProperties;
 import com.bankingpj.backend.auth.domain.RefreshToken;
 import com.bankingpj.backend.auth.repository.RefreshTokenRepository;
@@ -58,6 +59,7 @@ class RefreshTokenIntegrationTest {
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
     @Autowired private UserRepository users;
+    @Autowired private AccountRepository accounts;
     @Autowired private RefreshTokenRepository tokens;
     @Autowired private RefreshTokenGenerator generator;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -67,6 +69,7 @@ class RefreshTokenIntegrationTest {
     @BeforeEach
     void cleanDatabase() {
         tokens.deleteAll();
+        accounts.deleteAll();
         users.deleteAll();
     }
 

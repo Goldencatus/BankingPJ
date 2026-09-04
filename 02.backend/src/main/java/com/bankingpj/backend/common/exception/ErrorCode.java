@@ -12,7 +12,8 @@ public enum ErrorCode {
     LOGIN_NOT_ALLOWED("AUTH_002", HttpStatus.FORBIDDEN, "로그인할 수 없는 사용자 상태"),
     INVALID_ACCESS_TOKEN("AUTH_003", HttpStatus.UNAUTHORIZED, "인증이 필요하거나 Access Token이 유효하지 않음"),
     ACCESS_DENIED("AUTH_004", HttpStatus.FORBIDDEN, "해당 작업에 대한 권한이 없음"),
-    INVALID_REFRESH_TOKEN("AUTH_005", HttpStatus.UNAUTHORIZED, "Refresh Token이 없거나 유효하지 않음");
+    INVALID_REFRESH_TOKEN("AUTH_005", HttpStatus.UNAUTHORIZED, "Refresh Token이 없거나 유효하지 않음"),
+    ACCOUNT_NOT_FOUND("ACCOUNT_001", HttpStatus.NOT_FOUND, "계좌를 찾을 수 없습니다.");
 
     private final String code;
     private final HttpStatus httpStatus;
