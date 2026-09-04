@@ -39,11 +39,11 @@ public class RefreshToken {
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME(6)")
     private LocalDateTime createdAt;
 
-    // Allow JPA to restore persisted refresh-token records.
+    // JPA가 저장된 Refresh Token을 복원할 때 사용한다.
     protected RefreshToken() {
     }
 
-    // Store only a token hash and UTC timestamps derived from the issuance time.
+    // 원문 대신 토큰 해시와 UTC 기준 발급·만료 시각을 저장한다.
     public RefreshToken(User user, String tokenHash, LocalDateTime expiresAt, LocalDateTime createdAt) {
         this.user = Objects.requireNonNull(user);
         this.tokenHash = Objects.requireNonNull(tokenHash);
@@ -51,21 +51,28 @@ public class RefreshToken {
         this.createdAt = Objects.requireNonNull(createdAt);
     }
 
-    // Return the persisted token record identifier.
+    // 저장된 Refresh Token 식별자를 반환한다.
     public Long getRefreshTokenId() { return refreshTokenId; }
 
-    // Return the owning user through the lazy association.
+    // 토큰을 소유한 회원을 반환한다.
     public User getUser() { return user; }
 
-    // Return the one-way token hash used for database lookup.
+    // DB 조회에 사용하는 단방향 토큰 해시를 반환한다.
     public String getTokenHash() { return tokenHash; }
 
-    // Return the token expiration timestamp in UTC.
+    // 토큰 만료 시각을 반환한다.
     public LocalDateTime getExpiresAt() { return expiresAt; }
 
-    // Return the revocation timestamp, or null for a token not revoked.
+    // 폐기 시각을 반환하며 사용 가능한 토큰이면 null이다.
     public LocalDateTime getRevokedAt() { return revokedAt; }
 
-    // Return the token issuance timestamp in UTC.
+    // 토큰 발급 시각을 반환한다.
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    // 처음 폐기할 때만 시각을 기록하여 반복 로그아웃을 멱등적으로 처리한다.
+    public void revoke(LocalDateTime revokedAt) {
+        if (this.revokedAt == null) {
+            this.revokedAt = Objects.requireNonNull(revokedAt);
+        }
+    }
 }

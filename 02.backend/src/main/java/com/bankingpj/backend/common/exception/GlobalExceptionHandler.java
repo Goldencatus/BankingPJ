@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // 메서드 인가 실패를 일반 500 오류로 바꾸지 않고 Security 필터의 전용 처리기로 전달한다.
+    // 메서드 인가 실패를 Security 필터의 전용 처리기로 전달한다.
     @ExceptionHandler(AccessDeniedException.class)
     public void propagateAccessDenied(AccessDeniedException exception) {
         throw exception;

@@ -1,9 +1,5 @@
 HELP.md
 .gradle
-# Gradle
-/.gradle-user-home/
-**/.gradle/
-**/build/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/

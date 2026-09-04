@@ -39,8 +39,7 @@ public class SecurityConfig {
                                                   RestAuthenticationEntryPoint entryPoint,
                                                   RestAccessDeniedHandler deniedHandler) throws Exception {
         return http
-                // 인증은 Authorization 헤더로만 처리하며 세션·쿠키 인증을 사용하지 않는다.
-                // Refresh 쿠키를 소비할 재발급 API의 CSRF 정책은 STEP 4-4에서 별도로 검토한다.
+                // 세션은 사용하지 않으며 Refresh 쿠키 API의 최종 CSRF 보강은 보안 점검 단계에서 다룬다.
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(AbstractHttpConfigurer::disable)
@@ -48,7 +47,8 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login",
+                                "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions

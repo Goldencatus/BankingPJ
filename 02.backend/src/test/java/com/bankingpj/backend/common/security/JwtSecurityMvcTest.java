@@ -4,6 +4,7 @@ import com.bankingpj.backend.auth.config.TokenConfig;
 import com.bankingpj.backend.auth.dto.LoginResponse;
 import com.bankingpj.backend.auth.dto.LoginResult;
 import com.bankingpj.backend.auth.service.LoginService;
+import com.bankingpj.backend.auth.service.RefreshTokenService;
 import com.bankingpj.backend.auth.token.RefreshTokenCookieFactory;
 import com.bankingpj.backend.user.controller.AuthController;
 import com.bankingpj.backend.user.controller.UserController;
@@ -74,6 +75,7 @@ class JwtSecurityMvcTest {
     @Autowired private JwtAuthenticationConverter converter;
     @MockitoBean private SignupService signupService;
     @MockitoBean private LoginService loginService;
+    @MockitoBean private RefreshTokenService refreshTokenService;
     @MockitoSpyBean private RestAccessDeniedHandler deniedHandler;
     @MockitoSpyBean private RestAuthenticationEntryPoint entryPoint;
 
@@ -119,6 +121,32 @@ class JwtSecurityMvcTest {
                         """, JsonCompareMode.STRICT))
                 .andExpect(header().exists("Set-Cookie"));
         verify(loginService).login(any());
+    }
+
+    // Refresh API가 Bearer 토큰 없이 쿠키를 서비스에 전달하는지 검증한다.
+    @Test
+    void refreshRemainsPublicAndUsesCookie() throws Exception {
+        when(refreshTokenService.refresh("old-refresh")).thenReturn(new LoginResult(
+                new LoginResponse("new-access", "Bearer", 900), "new-refresh"));
+        mvc.perform(post("/api/auth/refresh").cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh")))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {"success":true,"data":{"accessToken":"new-access","tokenType":"Bearer","expiresIn":900},"error":null}
+                        """, JsonCompareMode.STRICT))
+                .andExpect(header().exists("Set-Cookie"));
+        verify(refreshTokenService).refresh("old-refresh");
+    }
+
+    // Logout API가 Bearer 토큰 없이 호출되고 Refresh 쿠키를 제거하는지 검증한다.
+    @Test
+    void logoutRemainsPublicAndDeletesCookie() throws Exception {
+        mvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {"success":true,"data":null,"error":null}
+                        """, JsonCompareMode.STRICT))
+                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")));
+        verify(refreshTokenService).logout(null);
     }
 
     // 보호 API에 인증 토큰이 없으면 공통 AUTH_003 오류를 반환하는지 검증한다.

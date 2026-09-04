@@ -11,7 +11,8 @@ public enum ErrorCode {
     INVALID_LOGIN_CREDENTIALS("AUTH_001", HttpStatus.UNAUTHORIZED, "잘못된 로그인 정보"),
     LOGIN_NOT_ALLOWED("AUTH_002", HttpStatus.FORBIDDEN, "로그인할 수 없는 사용자 상태"),
     INVALID_ACCESS_TOKEN("AUTH_003", HttpStatus.UNAUTHORIZED, "인증이 필요하거나 Access Token이 유효하지 않음"),
-    ACCESS_DENIED("AUTH_004", HttpStatus.FORBIDDEN, "해당 작업에 대한 권한이 없음");
+    ACCESS_DENIED("AUTH_004", HttpStatus.FORBIDDEN, "해당 작업에 대한 권한이 없음"),
+    INVALID_REFRESH_TOKEN("AUTH_005", HttpStatus.UNAUTHORIZED, "Refresh Token이 없거나 유효하지 않음");
 
     private final String code;
     private final HttpStatus httpStatus;
