@@ -107,4 +107,20 @@ public class Account {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+    // 검증된 입금액을 현재 잔액에 더하고 변경된 잔액을 반환한다.
+    public BigDecimal deposit(BigDecimal amount) {
+        balance = balance.add(Objects.requireNonNull(amount));
+        return balance;
+    }
+
+    // 검증된 출금액을 현재 잔액에서 빼고 음수 잔액 생성을 방지한다.
+    public BigDecimal withdraw(BigDecimal amount) {
+        BigDecimal withdrawalAmount = Objects.requireNonNull(amount);
+        if (balance.compareTo(withdrawalAmount) < 0) {
+            throw new IllegalArgumentException("Withdrawal amount exceeds balance");
+        }
+        balance = balance.subtract(withdrawalAmount);
+        return balance;
+    }
 }

@@ -5,6 +5,7 @@ import com.bankingpj.backend.auth.config.AuthProperties;
 import com.bankingpj.backend.auth.domain.RefreshToken;
 import com.bankingpj.backend.auth.repository.RefreshTokenRepository;
 import com.bankingpj.backend.auth.token.RefreshTokenGenerator;
+import com.bankingpj.backend.ledger.repository.LedgerEntryRepository;
 import com.bankingpj.backend.support.MySqlTestContainerConfiguration;
 import com.bankingpj.backend.user.domain.User;
 import com.bankingpj.backend.user.domain.UserStatus;
@@ -61,6 +62,7 @@ class RefreshTokenIntegrationTest {
     @Autowired private UserRepository users;
     @Autowired private AccountRepository accounts;
     @Autowired private RefreshTokenRepository tokens;
+    @Autowired private LedgerEntryRepository ledgerEntries;
     @Autowired private RefreshTokenGenerator generator;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private AuthProperties properties;
@@ -69,6 +71,7 @@ class RefreshTokenIntegrationTest {
     @BeforeEach
     void cleanDatabase() {
         tokens.deleteAll();
+        ledgerEntries.deleteAll();
         accounts.deleteAll();
         users.deleteAll();
     }

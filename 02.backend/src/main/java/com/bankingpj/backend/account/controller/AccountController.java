@@ -3,6 +3,11 @@ package com.bankingpj.backend.account.controller;
 import com.bankingpj.backend.account.dto.AccountCreateResponse;
 import com.bankingpj.backend.account.service.AccountService;
 import com.bankingpj.backend.common.response.ApiResponse;
+import com.bankingpj.backend.ledger.dto.DepositRequest;
+import com.bankingpj.backend.ledger.dto.DepositResponse;
+import com.bankingpj.backend.ledger.dto.WithdrawalRequest;
+import com.bankingpj.backend.ledger.dto.WithdrawalResponse;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -49,5 +55,25 @@ public class AccountController {
             @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId) {
         Long userId = Long.parseLong(jwt.getSubject());
         return ApiResponse.success(accountService.findOne(userId, accountId));
+    }
+
+    // 검증된 입금액과 JWT 회원 ID로 본인 계좌의 입금 처리를 요청한다.
+    @PostMapping("/{accountId}/deposits")
+    public ApiResponse<DepositResponse> deposit(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId,
+            @Valid @RequestBody DepositRequest request) {
+        Long userId = Long.parseLong(jwt.getSubject());
+        return ApiResponse.success(accountService.deposit(userId, accountId, request.amount()));
+    }
+
+    // 검증된 출금액과 JWT 회원 ID로 본인 계좌의 출금 처리를 요청한다.
+    @PostMapping("/{accountId}/withdrawals")
+    public ApiResponse<WithdrawalResponse> withdraw(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId,
+            @Valid @RequestBody WithdrawalRequest request) {
+        Long userId = Long.parseLong(jwt.getSubject());
+        return ApiResponse.success(accountService.withdraw(userId, accountId, request.amount()));
     }
 }
