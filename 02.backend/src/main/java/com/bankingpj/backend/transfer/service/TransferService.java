@@ -42,11 +42,12 @@ public class TransferService {
     @Transactional
     public TransferResponse transfer(Long userId, Long fromAccountId, String toAccountNumber, BigDecimal amount) {
         activeUser(userId);
-        Account fromAccount = accounts.findByAccountIdAndUser_UserId(fromAccountId, userId)
+        Long toAccountId = accounts.findAccountIdByAccountNumber(toAccountNumber)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
-        Account toAccount = accounts.findByAccountNumber(toAccountNumber)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
-        validateAccounts(fromAccount, toAccount);
+        LockedAccounts lockedAccounts = lockAccountsInIdOrder(fromAccountId, toAccountId);
+        Account fromAccount = lockedAccounts.fromAccount();
+        Account toAccount = lockedAccounts.toAccount();
+        validateAccounts(userId, fromAccount, toAccount);
 
         BigDecimal normalizedAmount = amount.setScale(4, RoundingMode.UNNECESSARY);
         if (fromAccount.getBalance().compareTo(normalizedAmount) < 0) {
@@ -86,8 +87,29 @@ public class TransferService {
         return user;
     }
 
-    // 동일 계좌 이체와 양쪽 계좌의 비활성 상태를 잔액 변경 전에 차단한다.
-    private void validateAccounts(Account fromAccount, Account toAccount) {
+    // 두 계좌를 식별자 오름차순으로 잠가 반대 방향 이체도 같은 DB Lock 순서를 사용하게 한다.
+    private LockedAccounts lockAccountsInIdOrder(Long fromAccountId, Long toAccountId) {
+        Long firstId = Math.min(fromAccountId, toAccountId);
+        Long secondId = Math.max(fromAccountId, toAccountId);
+        Account firstAccount = lockedAccount(firstId);
+        Account secondAccount = firstId.equals(secondId) ? firstAccount : lockedAccount(secondId);
+        if (fromAccountId.equals(firstId)) {
+            return new LockedAccounts(firstAccount, secondAccount);
+        }
+        return new LockedAccounts(secondAccount, firstAccount);
+    }
+
+    // 계좌 식별자로 PESSIMISTIC_WRITE 잠금을 획득하고 없는 계좌를 공통 오류로 변환한다.
+    private Account lockedAccount(Long accountId) {
+        return accounts.findByIdForUpdate(accountId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+    }
+
+    // 잠긴 최신 계좌로 출금 소유권·동일 계좌·양쪽 상태를 잔액 변경 전에 검증한다.
+    private void validateAccounts(Long userId, Account fromAccount, Account toAccount) {
+        if (!fromAccount.getUser().getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
         if (fromAccount.getAccountId().equals(toAccount.getAccountId())) {
             throw new BusinessException(ErrorCode.SAME_ACCOUNT_TRANSFER);
         }
@@ -99,5 +121,8 @@ public class TransferService {
     // DECIMAL(19,4)에 저장할 값의 정수부 자릿수를 계산한다.
     private int integerDigits(BigDecimal value) {
         return Math.max(value.precision() - value.scale(), 0);
+    }
+
+    private record LockedAccounts(Account fromAccount, Account toAccount) {
     }
 }

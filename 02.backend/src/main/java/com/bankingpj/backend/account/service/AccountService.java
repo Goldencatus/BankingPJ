@@ -127,7 +127,7 @@ public class AccountService {
     // ACTIVE 회원이 소유한 ACTIVE 계좌만 금융 변경 대상으로 반환한다.
     private Account activeOwnedAccount(Long userId, Long accountId) {
         activeUser(userId);
-        Account account = accounts.findByAccountIdAndUser_UserId(accountId, userId)
+        Account account = accounts.findOwnedByIdForUpdate(accountId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
         if (account.getStatus() != AccountStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.ACCOUNT_NOT_AVAILABLE);

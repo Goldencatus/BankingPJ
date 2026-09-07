@@ -41,3 +41,19 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// 동시성 통합 테스트의 요청별 진행 상황을 콘솔에서 관찰하기 위한 전용 작업이다.
+tasks.register('concurrencyTest', Test) {
+	description = 'Runs financial concurrency integration tests with console output.'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	outputs.upToDateWhen { false }
+	useJUnitPlatform()
+	filter {
+		includeTestsMatching 'com.bankingpj.backend.account.FinancialConcurrencyIntegrationTest'
+	}
+	testLogging {
+		showStandardStreams = true
+	}
+}

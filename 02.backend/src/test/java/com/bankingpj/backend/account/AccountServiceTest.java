@@ -108,7 +108,7 @@ class AccountServiceTest {
         User user = new User("deposit@example.com", "hash", "Deposit User", UserStatus.ACTIVE);
         Account account = new Account(user, "44444444444444", new BigDecimal("10.0000"), AccountStatus.ACTIVE);
         when(users.findById(4L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(40L, 4L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(40L, 4L)).thenReturn(Optional.of(account));
         when(ledgerEntries.saveAndFlush(any(LedgerEntry.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -128,7 +128,7 @@ class AccountServiceTest {
     void foreignOrMissingAccountCannotReceiveDeposit() {
         User user = new User("owner@example.com", "hash", "Owner", UserStatus.ACTIVE);
         when(users.findById(5L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(50L, 5L)).thenReturn(Optional.empty());
+        when(accounts.findOwnedByIdForUpdate(50L, 5L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.deposit(5L, 50L, new BigDecimal("1.0000")))
                 .isInstanceOfSatisfying(BusinessException.class,
@@ -143,7 +143,7 @@ class AccountServiceTest {
         Account account = new Account(user, "55555555555555", new BigDecimal("10.0000"),
                 AccountStatus.SUSPENDED);
         when(users.findById(6L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(60L, 6L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(60L, 6L)).thenReturn(Optional.of(account));
 
         assertThatThrownBy(() -> service.deposit(6L, 60L, new BigDecimal("1.0000")))
                 .isInstanceOfSatisfying(BusinessException.class,
@@ -159,7 +159,7 @@ class AccountServiceTest {
         Account account = new Account(user, "66666666666666", new BigDecimal("999999999999999.9999"),
                 AccountStatus.ACTIVE);
         when(users.findById(7L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(70L, 7L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(70L, 7L)).thenReturn(Optional.of(account));
 
         assertThatThrownBy(() -> service.deposit(7L, 70L, new BigDecimal("0.0001")))
                 .isInstanceOfSatisfying(BusinessException.class,
@@ -174,7 +174,7 @@ class AccountServiceTest {
         User user = new User("withdraw@example.com", "hash", "Withdraw User", UserStatus.ACTIVE);
         Account account = new Account(user, "88888888888888", new BigDecimal("100.0000"), AccountStatus.ACTIVE);
         when(users.findById(8L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(80L, 8L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(80L, 8L)).thenReturn(Optional.of(account));
         when(ledgerEntries.saveAndFlush(any(LedgerEntry.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -196,7 +196,7 @@ class AccountServiceTest {
         User user = new User("insufficient@example.com", "hash", "Withdraw User", UserStatus.ACTIVE);
         Account account = new Account(user, "99999999999999", new BigDecimal("50.0000"), AccountStatus.ACTIVE);
         when(users.findById(9L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(90L, 9L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(90L, 9L)).thenReturn(Optional.of(account));
 
         assertThatThrownBy(() -> service.withdraw(9L, 90L, new BigDecimal("50.0001")))
                 .isInstanceOfSatisfying(BusinessException.class,
@@ -210,7 +210,7 @@ class AccountServiceTest {
     void foreignOrMissingAccountCannotBeWithdrawn() {
         User user = new User("withdraw-owner@example.com", "hash", "Owner", UserStatus.ACTIVE);
         when(users.findById(10L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(100L, 10L)).thenReturn(Optional.empty());
+        when(accounts.findOwnedByIdForUpdate(100L, 10L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.withdraw(10L, 100L, new BigDecimal("1.0000")))
                 .isInstanceOfSatisfying(BusinessException.class,
@@ -224,7 +224,7 @@ class AccountServiceTest {
         User user = new User("closed-account@example.com", "hash", "Owner", UserStatus.ACTIVE);
         Account account = new Account(user, "10101010101010", new BigDecimal("10.0000"), AccountStatus.CLOSED);
         when(users.findById(11L)).thenReturn(Optional.of(user));
-        when(accounts.findByAccountIdAndUser_UserId(110L, 11L)).thenReturn(Optional.of(account));
+        when(accounts.findOwnedByIdForUpdate(110L, 11L)).thenReturn(Optional.of(account));
 
         assertThatThrownBy(() -> service.withdraw(11L, 110L, new BigDecimal("1.0000")))
                 .isInstanceOfSatisfying(BusinessException.class,
