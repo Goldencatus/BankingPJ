@@ -9,4 +9,7 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
 
     // 계좌의 원장 항목을 생성 순서대로 조회한다.
     List<LedgerEntry> findAllByAccount_AccountIdOrderByLedgerEntryIdAsc(Long accountId);
+
+    // 한 이체에서 생성된 DEBIT·CREDIT 원장을 생성 순서대로 조회한다.
+    List<LedgerEntry> findAllByTransfer_TransferIdOrderByLedgerEntryIdAsc(Long transferId);
 }

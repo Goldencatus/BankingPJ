@@ -15,7 +15,8 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN("AUTH_005", HttpStatus.UNAUTHORIZED, "Refresh Token이 없거나 유효하지 않음"),
     ACCOUNT_NOT_FOUND("ACCOUNT_001", HttpStatus.NOT_FOUND, "계좌를 찾을 수 없습니다."),
     ACCOUNT_NOT_AVAILABLE("ACCOUNT_002", HttpStatus.CONFLICT, "사용할 수 없는 계좌입니다."),
-    INSUFFICIENT_BALANCE("ACCOUNT_003", HttpStatus.CONFLICT, "계좌 잔액이 부족합니다.");
+    INSUFFICIENT_BALANCE("ACCOUNT_003", HttpStatus.CONFLICT, "계좌 잔액이 부족합니다."),
+    SAME_ACCOUNT_TRANSFER("TRANSFER_001", HttpStatus.CONFLICT, "동일한 계좌로 이체할 수 없습니다.");
 
     private final String code;
     private final HttpStatus httpStatus;

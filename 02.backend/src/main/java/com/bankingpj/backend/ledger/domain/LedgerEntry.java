@@ -1,6 +1,7 @@
 package com.bankingpj.backend.ledger.domain;
 
 import com.bankingpj.backend.account.domain.Account;
+import com.bankingpj.backend.transfer.domain.Transfer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,16 +45,27 @@ public class LedgerEntry {
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "DATETIME(6)")
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transfer_id")
+    private Transfer transfer;
+
     // JPA가 저장된 원장 항목을 복원할 때 사용한다.
     protected LedgerEntry() {
     }
 
     // 계좌 변경 결과와 양수 CREDIT 또는 음수 DEBIT 금액을 원장 항목으로 생성한다.
     public LedgerEntry(Account account, LedgerEntryType type, BigDecimal amount, BigDecimal balanceAfter) {
+        this(account, type, amount, balanceAfter, null);
+    }
+
+    // 이체 원장은 Transfer를 연결하고 단순 입출금 원장은 null 연결을 허용한다.
+    public LedgerEntry(Account account, LedgerEntryType type, BigDecimal amount, BigDecimal balanceAfter,
+                       Transfer transfer) {
         this.account = Objects.requireNonNull(account);
         this.type = Objects.requireNonNull(type);
         this.amount = Objects.requireNonNull(amount);
         this.balanceAfter = Objects.requireNonNull(balanceAfter);
+        this.transfer = transfer;
         if ((type == LedgerEntryType.CREDIT && amount.signum() <= 0)
                 || (type == LedgerEntryType.DEBIT && amount.signum() >= 0)) {
             throw new IllegalArgumentException("Ledger amount sign does not match type");
@@ -94,5 +106,10 @@ public class LedgerEntry {
     // 원장 항목 생성 시각을 반환한다.
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    // 이체 원장이 참조하는 Transfer를 반환하며 단순 입출금이면 null을 반환한다.
+    public Transfer getTransfer() {
+        return transfer;
     }
 }
