@@ -60,6 +60,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,6 +79,28 @@ class JwtSecurityMvcTest {
     @MockitoBean private RefreshTokenService refreshTokenService;
     @MockitoSpyBean private RestAccessDeniedHandler deniedHandler;
     @MockitoSpyBean private RestAuthenticationEntryPoint entryPoint;
+
+    // 로컬 Frontend의 credential 포함 사전 요청에 정확한 Origin만 허용하는지 검증한다.
+    @Test
+    void allowsCredentialedCorsPreflightFromLocalFrontend() throws Exception {
+        mvc.perform(options("/api/auth/refresh")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
+
+    // 허용 목록에 없는 Origin에는 credential CORS Header를 반환하지 않는지 검증한다.
+    @Test
+    void rejectsCorsPreflightFromUnknownOrigin() throws Exception {
+        mvc.perform(options("/api/auth/refresh")
+                        .header("Origin", "https://unknown.example")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"))
+                .andExpect(header().doesNotExist("Access-Control-Allow-Credentials"));
+    }
 
     // DB나 실제 환경 secret 없이 MVC 검증에 사용할 임시 서명 키와 설정을 제공한다.
     @DynamicPropertySource

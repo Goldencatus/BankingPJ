@@ -17,9 +17,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
 @EnableMethodSecurity
@@ -37,10 +41,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder,
                                                   JwtAuthenticationConverter converter,
                                                   RestAuthenticationEntryPoint entryPoint,
-                                                  RestAccessDeniedHandler deniedHandler) throws Exception {
+                                                  RestAccessDeniedHandler deniedHandler,
+                                                  CorsConfigurationSource corsConfigurationSource) throws Exception {
         return http
                 // 세션은 사용하지 않으며 Refresh 쿠키 API의 최종 CSRF 보강은 보안 점검 단계에서 다룬다.
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -59,6 +65,21 @@ public class SecurityConfig {
                         .authenticationEntryPoint(entryPoint)
                         .accessDeniedHandler(deniedHandler))
                 .build();
+    }
+
+    // 로컬 Frontend Origin에만 쿠키 포함 API 요청과 필요한 인증 Header를 허용한다.
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Request-ID"));
+        configuration.setExposedHeaders(List.of("X-Request-ID"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     // JWT 역할을 Spring Security 인증 객체의 권한으로 변환하도록 구성한다.
