@@ -298,6 +298,7 @@ class TransferIntegrationTest {
                                    String amountLiteral) throws Exception {
         return mvc.perform(post("/api/transfers")
                 .header("Authorization", "Bearer " + accessToken)
+                .header("Idempotency-Key", UUID.randomUUID().toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"fromAccountId\":" + fromAccountId
                         + ",\"toAccountNumber\":\"" + toAccountNumber

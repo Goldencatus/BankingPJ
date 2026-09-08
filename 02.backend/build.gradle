@@ -40,6 +40,12 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 전체 테스트 로그 중 멱등성 관찰 메시지만 터미널에 전달한다.
+	onOutput { descriptor, event ->
+		if (event.message.contains('[IDEMPOTENCY]')) {
+			print event.message
+		}
+	}
 }
 
 // 동시성 통합 테스트의 요청별 진행 상황을 콘솔에서 관찰하기 위한 전용 작업이다.

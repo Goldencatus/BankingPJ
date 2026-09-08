@@ -1,5 +1,7 @@
 package com.bankingpj.backend.account.service;
 
+import com.bankingpj.backend.common.response.PageResponse;
+import com.bankingpj.backend.ledger.dto.TransactionResponse;
 import com.bankingpj.backend.account.domain.Account;
 import com.bankingpj.backend.account.domain.AccountStatus;
 import com.bankingpj.backend.account.dto.AccountCreateResponse;
@@ -16,7 +18,7 @@ import com.bankingpj.backend.user.domain.UserStatus;
 import com.bankingpj.backend.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.domain.PageRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -68,6 +70,18 @@ public class AccountService {
         Account account = accounts.findByAccountIdAndUser_UserId(accountId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
         return response(account);
+    }
+
+    // 소유권을 일반 조회로 확인하고 모든 계좌 상태의 원장을 읽기 전용 페이지로 반환한다.
+    @Transactional(readOnly = true)
+    public PageResponse<TransactionResponse> transactions(Long userId, Long accountId, int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        activeUser(userId);
+        accounts.findByAccountIdAndUser_UserId(accountId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return PageResponse.from(ledgerEntries.findTransactions(accountId, PageRequest.of(page, size)));
     }
 
     // 본인 ACTIVE 계좌의 잔액을 늘리고 같은 트랜잭션에 CREDIT 원장을 저장한다.
