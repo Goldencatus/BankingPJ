@@ -16,6 +16,8 @@ public enum ErrorCode {
     ACCOUNT_NOT_FOUND("ACCOUNT_001", HttpStatus.NOT_FOUND, "계좌를 찾을 수 없습니다."),
     ACCOUNT_NOT_AVAILABLE("ACCOUNT_002", HttpStatus.CONFLICT, "사용할 수 없는 계좌입니다."),
     INSUFFICIENT_BALANCE("ACCOUNT_003", HttpStatus.CONFLICT, "계좌 잔액이 부족합니다."),
+    INVALID_ACCOUNT_STATUS_TRANSITION("ACCOUNT_004", HttpStatus.CONFLICT, "허용되지 않는 계좌 상태 변경입니다."),
+    NON_ZERO_BALANCE_CLOSE("ACCOUNT_005", HttpStatus.CONFLICT, "잔액이 있는 계좌는 해지할 수 없습니다."),
     SAME_ACCOUNT_TRANSFER("TRANSFER_001", HttpStatus.CONFLICT, "동일한 계좌로 이체할 수 없습니다."),
     IDEMPOTENCY_KEY_CONFLICT("TRANSFER_002", HttpStatus.CONFLICT,
             "동일한 Idempotency-Key가 다른 이체 요청에 사용되었습니다.");

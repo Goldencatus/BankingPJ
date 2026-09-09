@@ -1,9 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
+import { AccountDetailPage } from './pages/AccountDetailPage'
+import { AccountsPage } from './pages/AccountsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { TransferPage } from './pages/TransferPage'
+import { TransactionsPage } from './pages/TransactionsPage'
+import { SignupPage } from './pages/SignupPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
@@ -12,14 +16,17 @@ import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
 export default function App() {
   return (
     <Routes>
-      <Route element={<PublicOnlyRoute />}><Route path="/login" element={<LoginPage />} /></Route>
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+      </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/accounts" element={<PlaceholderPage title="Accounts" description="계좌 목록 API를 연결할 화면입니다." />} />
-          <Route path="/accounts/:accountId" element={<PlaceholderPage title="Account Detail" description="계좌 상세와 거래내역을 연결할 화면입니다." />} />
-          <Route path="/transfer" element={<PlaceholderPage title="Transfer" description="멱등성 이체 폼을 연결할 화면입니다." />} />
-          <Route path="/transactions" element={<PlaceholderPage title="Transactions" description="원장 기반 거래내역을 연결할 화면입니다." />} />
+          <Route path="/accounts" element={<AccountsPage />} />
+          <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
+          <Route path="/transfer" element={<TransferPage />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
         </Route>
       </Route>
       <Route path="/unauthorized" element={<UnauthorizedPage />} />

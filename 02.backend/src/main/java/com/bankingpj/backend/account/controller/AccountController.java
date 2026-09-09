@@ -3,6 +3,7 @@ package com.bankingpj.backend.account.controller;
 import com.bankingpj.backend.common.response.PageResponse;
 import com.bankingpj.backend.ledger.dto.TransactionResponse;
 import com.bankingpj.backend.account.dto.AccountCreateResponse;
+import com.bankingpj.backend.account.dto.AccountStatusResponse;
 import com.bankingpj.backend.account.service.AccountService;
 import com.bankingpj.backend.common.response.ApiResponse;
 import com.bankingpj.backend.ledger.dto.DepositRequest;
@@ -72,6 +73,30 @@ public class AccountController {
             @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId) {
         Long userId = Long.parseLong(jwt.getSubject());
         return ApiResponse.success(accountService.findOne(userId, accountId));
+    }
+
+    // JWT 소유자의 계좌를 일시정지하는 명시적 업무 명령을 처리한다.
+    @PostMapping("/{accountId}/suspend")
+    public ApiResponse<AccountStatusResponse> suspend(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId) {
+        return ApiResponse.success(accountService.suspend(Long.parseLong(jwt.getSubject()), accountId));
+    }
+
+    // JWT 소유자의 일시정지 계좌를 다시 활성화한다.
+    @PostMapping("/{accountId}/activate")
+    public ApiResponse<AccountStatusResponse> activate(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId) {
+        return ApiResponse.success(accountService.activate(Long.parseLong(jwt.getSubject()), accountId));
+    }
+
+    // JWT 소유자의 잔액 없는 계좌를 논리적으로 해지한다.
+    @PostMapping("/{accountId}/close")
+    public ApiResponse<AccountStatusResponse> close(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable @Positive(message = "accountId는 양수여야 합니다") Long accountId) {
+        return ApiResponse.success(accountService.close(Long.parseLong(jwt.getSubject()), accountId));
     }
 
     // 검증된 입금액과 JWT 회원 ID로 본인 계좌의 입금 처리를 요청한다.

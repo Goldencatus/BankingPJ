@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { apiErrorMessage } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
@@ -17,8 +17,9 @@ export function LoginPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const destination = (location.state as { from?: string } | null)?.from || '/dashboard'
-  const form = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
+  const routeState = location.state as { from?: string; signupEmail?: string; signupSuccess?: boolean } | null
+  const destination = routeState?.from || '/dashboard'
+  const form = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { email: routeState?.signupEmail ?? '', password: '' } })
   const login = useMutation({ mutationFn: auth.login, onSuccess: () => navigate(destination, { replace: true }) })
 
   return (
@@ -35,8 +36,10 @@ export function LoginPage() {
           {form.formState.errors.email && <p className="field-error">{form.formState.errors.email.message}</p>}
           <label htmlFor="password">비밀번호</label><input id="password" type="password" autoComplete="current-password" placeholder="비밀번호 입력" {...form.register('password')} />
           {form.formState.errors.password && <p className="field-error">{form.formState.errors.password.message}</p>}
+          {routeState?.signupSuccess && <div className="success-message" role="status"><strong>회원가입이 완료되었습니다.</strong><span>가입한 이메일로 로그인해 주세요.</span></div>}
           {login.isError && <div className="request-error" role="alert">{apiErrorMessage(login.error, '로그인에 실패했습니다.')}</div>}
           <button className="primary-button" type="submit" disabled={login.isPending}>{login.isPending ? '로그인 중...' : '로그인'}</button>
+          <p className="auth-switch">아직 계정이 없으신가요? <Link to="/signup">회원가입</Link></p>
         </form>
       </section>
     </main>

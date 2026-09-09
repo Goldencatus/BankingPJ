@@ -8,12 +8,14 @@ import { AuthProvider } from '../auth/AuthProvider'
 import { getAccessToken, setAccessToken } from '../auth/tokenStore'
 
 const authMocks = vi.hoisted(() => ({
+  signupRequest: vi.fn(),
   loginRequest: vi.fn(),
   logoutRequest: vi.fn(),
   refreshAccessToken: vi.fn(),
 }))
 
 vi.mock('../api/authApi', () => ({
+  signupRequest: authMocks.signupRequest,
   loginRequest: authMocks.loginRequest,
   logoutRequest: authMocks.logoutRequest,
 }))
@@ -56,6 +58,7 @@ async function submitValidLogin() {
 
 describe('Frontend 로그인 및 인증 흐름', () => {
   beforeEach(() => {
+    authMocks.signupRequest.mockReset()
     authMocks.loginRequest.mockReset()
     authMocks.logoutRequest.mockReset()
     authMocks.refreshAccessToken.mockReset()

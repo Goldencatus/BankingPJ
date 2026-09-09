@@ -246,7 +246,7 @@ class LoginIntegrationTest {
         mvc.perform(get("/api/users/me").header("Authorization", "Bearer " + accessToken(result)))
                 .andExpect(status().isOk())
                 .andExpect(content().json("""
-                        {"success":true,"data":{"userId":%d,"role":"USER"},"error":null}
+                        {"success":true,"data":{"userId":%d,"name":"Login Test User","role":"USER"},"error":null}
                         """.formatted(user.getUserId()), JsonCompareMode.STRICT));
         mvc.perform(get("/api/users/me").cookie(refreshCookie(result)))
                 .andExpect(status().isUnauthorized())

@@ -5,6 +5,7 @@ import com.bankingpj.backend.ledger.dto.TransactionResponse;
 import com.bankingpj.backend.account.domain.Account;
 import com.bankingpj.backend.account.domain.AccountStatus;
 import com.bankingpj.backend.account.dto.AccountCreateResponse;
+import com.bankingpj.backend.account.dto.AccountStatusResponse;
 import com.bankingpj.backend.account.repository.AccountRepository;
 import com.bankingpj.backend.common.exception.BusinessException;
 import com.bankingpj.backend.common.exception.ErrorCode;
@@ -117,6 +118,42 @@ public class AccountService {
                 entry.getCreatedAt());
     }
 
+    // 본인 ACTIVE 계좌를 쓰기 잠금 안에서 일시정지한다.
+    @Transactional
+    public AccountStatusResponse suspend(Long userId, Long accountId) {
+        Account account = ownedAccountForUpdate(userId, accountId);
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.INVALID_ACCOUNT_STATUS_TRANSITION);
+        }
+        account.suspend();
+        return statusResponse(accounts.saveAndFlush(account));
+    }
+
+    // 본인 SUSPENDED 계좌를 쓰기 잠금 안에서 다시 활성화한다.
+    @Transactional
+    public AccountStatusResponse activate(Long userId, Long accountId) {
+        Account account = ownedAccountForUpdate(userId, accountId);
+        if (account.getStatus() != AccountStatus.SUSPENDED) {
+            throw new BusinessException(ErrorCode.INVALID_ACCOUNT_STATUS_TRANSITION);
+        }
+        account.activate();
+        return statusResponse(accounts.saveAndFlush(account));
+    }
+
+    // 잔액이 0인 본인 미해지 계좌를 쓰기 잠금 안에서 영구 해지한다.
+    @Transactional
+    public AccountStatusResponse close(Long userId, Long accountId) {
+        Account account = ownedAccountForUpdate(userId, accountId);
+        if (account.getStatus() == AccountStatus.CLOSED) {
+            throw new BusinessException(ErrorCode.INVALID_ACCOUNT_STATUS_TRANSITION);
+        }
+        if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new BusinessException(ErrorCode.NON_ZERO_BALANCE_CLOSE);
+        }
+        account.close();
+        return statusResponse(accounts.saveAndFlush(account));
+    }
+
     // 저장된 번호와 충돌하지 않는 후보를 제한된 횟수 안에서 선택한다.
     private String availableAccountNumber() {
         for (int attempt = 0; attempt < MAX_ACCOUNT_NUMBER_ATTEMPTS; attempt++) {
@@ -140,19 +177,29 @@ public class AccountService {
 
     // ACTIVE 회원이 소유한 ACTIVE 계좌만 금융 변경 대상으로 반환한다.
     private Account activeOwnedAccount(Long userId, Long accountId) {
-        activeUser(userId);
-        Account account = accounts.findOwnedByIdForUpdate(accountId, userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+        Account account = ownedAccountForUpdate(userId, accountId);
         if (account.getStatus() != AccountStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.ACCOUNT_NOT_AVAILABLE);
         }
         return account;
     }
 
+    // 활성 회원의 본인 계좌에 PESSIMISTIC_WRITE 잠금을 획득한다.
+    private Account ownedAccountForUpdate(Long userId, Long accountId) {
+        activeUser(userId);
+        return accounts.findOwnedByIdForUpdate(accountId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+    }
+
     // Account Entity에서 외부에 공개할 계좌 필드만 응답 DTO로 변환한다.
     private AccountCreateResponse response(Account account) {
         return new AccountCreateResponse(account.getAccountId(), account.getAccountNumber(), account.getBalance(),
                 account.getStatus(), account.getCreatedAt());
+    }
+
+    // 상태 변경 후 최신 상태와 수정 시각만 안전한 응답으로 변환한다.
+    private AccountStatusResponse statusResponse(Account account) {
+        return new AccountStatusResponse(account.getAccountId(), account.getStatus(), account.getUpdatedAt());
     }
 
     // DECIMAL(19,4)에 저장할 값의 정수부 자릿수를 계산한다.

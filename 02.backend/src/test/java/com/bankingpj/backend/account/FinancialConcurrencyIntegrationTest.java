@@ -191,6 +191,46 @@ class FinancialConcurrencyIntegrationTest {
                 .hasSize(2);
     }
 
+    // 동일 계좌의 일시정지와 출금이 경쟁해도 잠금 순서에 따른 직렬화 결과만 남는지 검증한다.
+    @Test
+    void serializesSuspendAndWithdrawalOnSameAccount() throws Exception {
+        User owner = createUser();
+        Account account = createAccount(owner, new BigDecimal("100000.0000"));
+
+        List<Callable<AttemptResult>> actions = List.of(
+                () -> {
+                    accountService.suspend(owner.getUserId(), account.getAccountId());
+                    return AttemptResult.STATUS_CHANGED;
+                },
+                () -> {
+                    try {
+                        accountService.withdraw(owner.getUserId(), account.getAccountId(),
+                                new BigDecimal("10000.0000"));
+                        return AttemptResult.SUCCESS;
+                    } catch (BusinessException exception) {
+                        if (exception.getErrorCode() == ErrorCode.ACCOUNT_NOT_AVAILABLE) {
+                            return AttemptResult.ACCOUNT_NOT_AVAILABLE;
+                        }
+                        throw exception;
+                    }
+                });
+
+        List<AttemptResult> results = runConcurrently(actions);
+        Account persisted = accounts.findById(account.getAccountId()).orElseThrow();
+        int ledgerCount = ledgerEntries.findAllByAccount_AccountIdOrderByLedgerEntryIdAsc(account.getAccountId()).size();
+
+        assertThat(persisted.getStatus()).isEqualTo(AccountStatus.SUSPENDED);
+        if (persisted.getBalance().compareTo(new BigDecimal("100000.0000")) == 0) {
+            assertThat(results).containsExactlyInAnyOrder(
+                    AttemptResult.STATUS_CHANGED, AttemptResult.ACCOUNT_NOT_AVAILABLE);
+            assertThat(ledgerCount).isZero();
+        } else {
+            assertThat(persisted.getBalance()).isEqualByComparingTo("90000.0000");
+            assertThat(results).containsExactlyInAnyOrder(AttemptResult.STATUS_CHANGED, AttemptResult.SUCCESS);
+            assertThat(ledgerCount).isEqualTo(1);
+        }
+    }
+
     // 같은 작업을 지정된 수만큼 동시에 시작하고 모든 결과를 제한 시간 안에 수집한다.
     private List<AttemptResult> runConcurrently(
             int taskCount, IntFunction<Callable<AttemptResult>> actionFactory) throws Exception {
@@ -250,6 +290,8 @@ class FinancialConcurrencyIntegrationTest {
 
     private enum AttemptResult {
         SUCCESS,
-        INSUFFICIENT_BALANCE
+        INSUFFICIENT_BALANCE,
+        STATUS_CHANGED,
+        ACCOUNT_NOT_AVAILABLE
     }
 }

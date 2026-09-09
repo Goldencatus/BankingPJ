@@ -14,3 +14,7 @@ export interface LoginResponse {
   tokenType: string
   expiresIn: number
 }
+
+export interface SignupResponse {
+  userId: number
+}

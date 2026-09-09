@@ -67,3 +67,11 @@ export function apiErrorMessage(error: unknown, fallback: string) {
   }
   return fallback
 }
+
+// Backend 공통 오류 응답에서 화면 분기에 사용할 공개 ErrorCode를 반환한다.
+export function apiErrorCode(error: unknown) {
+  if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
+    return error.response?.data?.error?.code
+  }
+  return undefined
+}

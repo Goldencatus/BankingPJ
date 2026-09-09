@@ -232,4 +232,68 @@ class AccountServiceTest {
         assertThat(account.getBalance()).isEqualByComparingTo("10.0000");
         verify(ledgerEntries, never()).saveAndFlush(any());
     }
+
+    // ACTIVE 계좌를 잠금 조회하여 SUSPENDED로 변경하는지 검증한다.
+    @Test
+    void suspendsActiveOwnedAccount() {
+        User user = new User("suspend@example.com", "hash", "Owner", UserStatus.ACTIVE);
+        Account account = new Account(user, "12121212121212", BigDecimal.ZERO, AccountStatus.ACTIVE);
+        when(users.findById(12L)).thenReturn(Optional.of(user));
+        when(accounts.findOwnedByIdForUpdate(120L, 12L)).thenReturn(Optional.of(account));
+        when(accounts.saveAndFlush(account)).thenReturn(account);
+
+        assertThat(service.suspend(12L, 120L).status()).isEqualTo(AccountStatus.SUSPENDED);
+        verify(accounts).findOwnedByIdForUpdate(120L, 12L);
+    }
+
+    // SUSPENDED 계좌를 ACTIVE로 되돌리는지 검증한다.
+    @Test
+    void activatesSuspendedOwnedAccount() {
+        User user = new User("activate@example.com", "hash", "Owner", UserStatus.ACTIVE);
+        Account account = new Account(user, "13131313131313", BigDecimal.ZERO, AccountStatus.SUSPENDED);
+        when(users.findById(13L)).thenReturn(Optional.of(user));
+        when(accounts.findOwnedByIdForUpdate(130L, 13L)).thenReturn(Optional.of(account));
+        when(accounts.saveAndFlush(account)).thenReturn(account);
+
+        assertThat(service.activate(13L, 130L).status()).isEqualTo(AccountStatus.ACTIVE);
+    }
+
+    // 잔액이 0인 SUSPENDED 계좌를 CLOSED로 변경하는지 검증한다.
+    @Test
+    void closesZeroBalanceSuspendedAccount() {
+        User user = new User("close@example.com", "hash", "Owner", UserStatus.ACTIVE);
+        Account account = new Account(user, "14141414141414", new BigDecimal("0.0000"),
+                AccountStatus.SUSPENDED);
+        when(users.findById(14L)).thenReturn(Optional.of(user));
+        when(accounts.findOwnedByIdForUpdate(140L, 14L)).thenReturn(Optional.of(account));
+        when(accounts.saveAndFlush(account)).thenReturn(account);
+
+        assertThat(service.close(14L, 140L).status()).isEqualTo(AccountStatus.CLOSED);
+    }
+
+    // 잔액이 남은 계좌는 ACCOUNT_005로 해지를 거부하는지 검증한다.
+    @Test
+    void rejectsCloseWhenBalanceIsNotZero() {
+        User user = new User("nonzero@example.com", "hash", "Owner", UserStatus.ACTIVE);
+        Account account = new Account(user, "15151515151515", new BigDecimal("0.0001"), AccountStatus.ACTIVE);
+        when(users.findById(15L)).thenReturn(Optional.of(user));
+        when(accounts.findOwnedByIdForUpdate(150L, 15L)).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> service.close(15L, 150L)).isInstanceOfSatisfying(BusinessException.class,
+                exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NON_ZERO_BALANCE_CLOSE));
+        verify(accounts, never()).saveAndFlush(account);
+    }
+
+    // CLOSED 계좌의 재활성화를 ACCOUNT_004로 거부하는지 검증한다.
+    @Test
+    void rejectsActivationOfClosedAccount() {
+        User user = new User("closed@example.com", "hash", "Owner", UserStatus.ACTIVE);
+        Account account = new Account(user, "16161616161616", BigDecimal.ZERO, AccountStatus.CLOSED);
+        when(users.findById(16L)).thenReturn(Optional.of(user));
+        when(accounts.findOwnedByIdForUpdate(160L, 16L)).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> service.activate(16L, 160L)).isInstanceOfSatisfying(BusinessException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(ErrorCode.INVALID_ACCOUNT_STATUS_TRANSITION));
+    }
 }

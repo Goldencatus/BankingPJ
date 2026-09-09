@@ -8,7 +8,10 @@ import com.bankingpj.backend.auth.service.RefreshTokenService;
 import com.bankingpj.backend.auth.token.RefreshTokenCookieFactory;
 import com.bankingpj.backend.user.controller.AuthController;
 import com.bankingpj.backend.user.controller.UserController;
+import com.bankingpj.backend.user.domain.UserRole;
+import com.bankingpj.backend.user.dto.CurrentUserResponse;
 import com.bankingpj.backend.user.dto.SignupResponse;
+import com.bankingpj.backend.user.service.CurrentUserService;
 import com.bankingpj.backend.user.service.SignupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -75,6 +78,7 @@ class JwtSecurityMvcTest {
     @Autowired private JwtEncoder encoder;
     @Autowired private JwtAuthenticationConverter converter;
     @MockitoBean private SignupService signupService;
+    @MockitoBean private CurrentUserService currentUserService;
     @MockitoBean private LoginService loginService;
     @MockitoBean private RefreshTokenService refreshTokenService;
     @MockitoSpyBean private RestAccessDeniedHandler deniedHandler;
@@ -178,13 +182,14 @@ class JwtSecurityMvcTest {
         assertUnauthorized(mvc.perform(get("/api/users/me")));
     }
 
-    // 실제 서명된 JWT로 회원 ID와 역할만 반환하고 세션을 만들지 않는지 검증한다.
+    // 실제 서명된 JWT로 DB 조회 결과의 이름을 반환하고 민감정보나 세션은 만들지 않는지 검증한다.
     @Test
     void validTokenReturnsCurrentUserWithoutSessionOrSensitiveFields() throws Exception {
+        when(currentUserService.find(42L)).thenReturn(new CurrentUserResponse(42L, "홍길동", UserRole.USER));
         mvc.perform(get("/api/users/me").header("Authorization", "Bearer " + validToken()))
                 .andExpect(status().isOk())
                 .andExpect(content().json("""
-                        {"success":true,"data":{"userId":42,"role":"USER"},"error":null}
+                        {"success":true,"data":{"userId":42,"name":"홍길동","role":"USER"},"error":null}
                         """, JsonCompareMode.STRICT))
                 .andExpect(header().doesNotExist("Set-Cookie"))
                 .andExpect(result -> assertThat(result.getRequest().getSession(false)).isNull());

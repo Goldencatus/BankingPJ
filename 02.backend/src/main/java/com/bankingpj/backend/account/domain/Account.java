@@ -123,4 +123,28 @@ public class Account {
         balance = balance.subtract(withdrawalAmount);
         return balance;
     }
+
+    // ACTIVE 계좌를 일시정지 상태로 변경한다.
+    public void suspend() {
+        if (status != AccountStatus.ACTIVE) {
+            throw new IllegalStateException("Only active account can be suspended");
+        }
+        status = AccountStatus.SUSPENDED;
+    }
+
+    // SUSPENDED 계좌를 다시 정상 상태로 변경한다.
+    public void activate() {
+        if (status != AccountStatus.SUSPENDED) {
+            throw new IllegalStateException("Only suspended account can be activated");
+        }
+        status = AccountStatus.ACTIVE;
+    }
+
+    // 잔액이 없는 ACTIVE 또는 SUSPENDED 계좌를 영구 해지 상태로 변경한다.
+    public void close() {
+        if (status == AccountStatus.CLOSED || balance.compareTo(BigDecimal.ZERO) != 0) {
+            throw new IllegalStateException("Account cannot be closed");
+        }
+        status = AccountStatus.CLOSED;
+    }
 }
