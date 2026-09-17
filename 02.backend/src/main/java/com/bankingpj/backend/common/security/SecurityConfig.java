@@ -1,6 +1,7 @@
 package com.bankingpj.backend.common.security;
 
 import com.bankingpj.backend.user.domain.UserRole;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -67,11 +68,12 @@ public class SecurityConfig {
                 .build();
     }
 
-    // 로컬 Frontend Origin에만 쿠키 포함 API 요청과 필요한 인증 Header를 허용한다.
+    // 설정된 Frontend Origin에만 쿠키 포함 API 요청과 필요한 인증 Header를 허용한다.
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+        configuration.setAllowedOrigins(validatedAllowedOrigins(allowedOrigins));
         configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Request-ID"));
         configuration.setExposedHeaders(List.of("X-Request-ID"));
@@ -80,6 +82,19 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    // 빈 Origin과 credential 요청에 사용할 수 없는 와일드카드를 시작 시 차단한다.
+    private List<String> validatedAllowedOrigins(List<String> allowedOrigins) {
+        List<String> normalized = allowedOrigins.stream()
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .distinct()
+                .toList();
+        if (normalized.isEmpty() || normalized.contains("*")) {
+            throw new IllegalArgumentException("CORS_ALLOWED_ORIGINS must contain explicit origins");
+        }
+        return normalized;
     }
 
     // JWT 역할을 Spring Security 인증 객체의 권한으로 변환하도록 구성한다.

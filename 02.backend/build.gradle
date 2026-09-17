@@ -63,3 +63,28 @@ tasks.register('concurrencyTest', Test) {
 		showStandardStreams = true
 	}
 }
+
+// 일반 애플리케이션 실행과 분리하여 명시적으로만 성능 테스트 데이터를 생성한다.
+def seedScaleProperty = providers.gradleProperty('seedScale')
+tasks.register('seedData', JavaExec) {
+	group = 'application'
+	description = 'Seeds performance test data. Requires -PseedScale=SMALL|MEDIUM|LARGE.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.bankingpj.backend.performance.PerformanceDataSeeder'
+	dependsOn tasks.named('classes')
+	doFirst {
+		if (!seedScaleProperty.isPresent()) {
+			throw new GradleException('seedData 실행 시 -PseedScale=SMALL|MEDIUM|LARGE 를 지정하세요.')
+		}
+		args(seedScaleProperty.get())
+	}
+}
+
+// bankingpj_perf의 STEP 16 데이터만 명시적으로 초기화한다.
+tasks.register('resetSeedData', JavaExec) {
+	group = 'application'
+	description = 'Resets STEP 16 data only in bankingpj_perf.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.bankingpj.backend.performance.PerformanceDataResetter'
+	dependsOn tasks.named('classes')
+}

@@ -22,6 +22,9 @@ dist/
 # Logs
 *.log
 
+# k6 local results
+/03.infra/k6/results/
+
 # OS
 .DS_Store
 Thumbs.db

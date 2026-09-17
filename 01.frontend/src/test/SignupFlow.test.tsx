@@ -141,7 +141,9 @@ describe('Frontend 회원가입 흐름', () => {
       response,
     )
 
-    signupMocks.signupRequest.mockRejectedValueOnce(error)
+    signupMocks.signupRequest.mockImplementationOnce(() => {
+      throw error
+    })
     renderAuthPages()
     await submitValidSignup()
     expect(await screen.findByRole('alert')).toHaveTextContent('이미 사용 중인 이메일')

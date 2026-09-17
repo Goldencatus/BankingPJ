@@ -2,7 +2,11 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { getAccessToken, setAccessToken } from '../auth/tokenStore'
 import type { ApiResponse, LoginResponse } from '../types/api'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const configuredBaseURL = import.meta.env.VITE_API_BASE_URL?.trim()
+if (import.meta.env.PROD && !configuredBaseURL) {
+  throw new Error('VITE_API_BASE_URL은 production build에서 필수입니다.')
+}
+const baseURL = configuredBaseURL || 'http://localhost:8080'
 
 export const apiClient = axios.create({ baseURL, withCredentials: true })
 const refreshClient = axios.create({ baseURL, withCredentials: true })
