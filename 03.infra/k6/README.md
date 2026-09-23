@@ -57,3 +57,20 @@ $env:SEEDER_TEST_PASSWORD = '<Seeder 실행 때 사용한 로컬 테스트 비�
 - `report.md`: 실제 결과 비교와 병목 관찰 항목
 
 읽기 지연 시나리오에는 반복 사이 1초 대기가 있으므로 최대 처리량 판단에는 `read-rps*` 결과를 사용합니다. 비밀번호, JWT, Access/Refresh Token은 결과 파일에 기록하지 않습니다.
+
+## AWS 배포 E2E 실행
+
+AWS 전용 runner는 Seeder나 DB 직접 INSERT를 사용하지 않고 REST API로 `k6-aws-*` 사용자와 최소 계좌/잔액만 준비합니다. 비밀번호는 Git에서 제외되는 `.env.aws.local`에 최초 한 번 생성되어 재실행 시 같은 사용자를 재사용합니다.
+
+```powershell
+cd C:\BankingPJ
+.\03.infra\k6\run-aws-performance-suite.ps1
+```
+
+실패 지점부터 다시 시작할 때는 해당 시나리오를 지정합니다.
+
+```powershell
+.\03.infra\k6\run-aws-performance-suite.ps1 -StartAt transfer-hot
+```
+
+결과는 `03.infra/k6/results/aws-<timestamp>/`에 저장되며 기존 Local 결과와 섞이지 않습니다.
